@@ -1,0 +1,84 @@
+1. Assignment
+=====================
+
+Create a REST API operation to return accounts and cards of a particular bank customer in a specific format. Additional condition - don't return Credit cards of Business customers. The sample database structure and expected operation output format are supplied.
+
+The preferred tech. stack for implementation is Java, SpringBoot, Hibernate, Flyway, H2. If possible, avoid using java.util.Set and javax.persistence.FetchType.EAGER (both directly or indirectly) within the Hibernate's Entity Model. Also, prefer setting the spring.jpa.open-in-view property to 'false'. Write at least one unit test to cover the most important method of Service layer.
+
+The assignment will be evaluated according to application design and clean code practices applied. Please zip your solution together with the project files, or share via GitHub. Don't hesitate to reach out in case of any questions.
+
+
+2. Database
+=====================
+
+CREATE TABLE customer
+(
+    id                    BIGINT  NOT NULL,
+    full_name             VARCHAR(255),
+    type                  VARCHAR(20),
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE card
+(
+    id                    BIGINT  NOT NULL,
+    customer_id           BIGINT  NOT NULL,
+    type                  VARCHAR(20),
+    card_number           VARCHAR(20),
+    expiry                TIMESTAMP,
+    PRIMARY KEY (id),
+    CONSTRAINT fk_card_customer FOREIGN KEY(customer_id) REFERENCES customer (id)
+);
+
+CREATE TABLE account
+(
+    id                    BIGINT NOT NULL,
+    customer_id           BIGINT NOT NULL,
+	iban                  VARCHAR(30),
+	currency              VARCHAR(3),
+	balance               NUMERIC(19,2),
+    PRIMARY KEY (id),
+    CONSTRAINT fk_account_customer FOREIGN KEY(customer_id) REFERENCES customer (id)
+);
+
+INSERT INTO customer VALUES
+    (0, 'John Smith', 'Personal'),
+    (1, 'Jane Doe', 'Business');
+
+INSERT INTO card VALUES
+    (0, 0,  'Debit', '5236 5484 2365 4125', '2020-10-05 14:01:10'),
+    (1, 0,  'Credit', '8542 8974 2315 3254', '2021-02-24 13:05:26'),
+    (2, 1,  'Credit', '7841 2345 8912 7452', '2022-03-07 10:34:59'),
+    (3, 1,  'Debit', '1254 2538 8965 1245', '2018-09-17 09:25:34');
+
+INSERT INTO account VALUES
+    (0, 0, 'DK9520000123456789', 'DKK', 1258.34),
+    (1, 0, 'LT601010012345678901', 'EUR', 516.25),
+    (2, 1, 'SE7280000810340009783242', 'SEK', 6231.84),
+    (3, 1, 'GB33BUKB20201555555555', 'GBP', 895.54);
+	
+	
+3. Expected REST API operation output for customer id = 1
+=====================
+
+{
+  "id": "1",
+  "full_name": "Jane Doe",
+  "type": "Business",
+  "cards": [
+    {
+	  "id": "3",
+      "value": "xxxx xxxx xxxx 1245 - Debit"
+	}
+  ],
+  "accounts": [
+    {
+	  "id": "2",
+      "value": "SE7280000810340009783242 - 6231.84 SEK"
+	},
+	{
+	  "id": "3",
+	  "value": "GB33BUKB20201555555555 - 895.54 GBP"
+	}
+  ]
+}
